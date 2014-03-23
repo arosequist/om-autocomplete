@@ -12,26 +12,26 @@ There are currently two examples for om-autocomplete:
 
 ## Details
 
-The `arosequist.om-autocomplete` namespace contains a single function, `autocomplete`. This is an Om component that handles the core autocomplete logic, but does not directly contain any DOM elements. The options for `autocomplete` are:
+The `arosequist.om-autocomplete` namespace contains a single function, `autocomplete`. This is an Om component that handles the core autocomplete logic, but does not directly render any DOM elements. The options for `autocomplete` are (as keywords):
 
-* **result-ch** is a channel that will receive an item once it's been selected.
-* **suggestions-fn** is a function that takes three arguments: value (what the user has currently entered), suggestions-ch (a channel where you should put the suggestions once you've retrieved them), and cancel-ch (a channel that will be closed if the user changes the value).
-* **container-view** is an Om component that will hold the other two autocomplete components. Typically, this will render a simple div. It will receive `input-component` and `results-component` as state (described below).
-* **container-opts** contains any options that should be passed to the `container-view`.
-* **input-view** is an Om component that will be responsible for taking user input. The state it receives will contain:
- * **:focus-ch** is a channel that you should put `true` on whenever the input receives focus, and `false` when the input loses focus.
- * **:value-ch** is a channel that you should put the user-supplied value onto.
- * **:highlight-ch** is a channel that you should put the index of the highlighted item onto. In a traditional autocompleter, this will be used when the user presses the up/down arrow keys.
- * **:select-ch** is a channel that you should put the index of the selected item onto. In a traditional autocompleter, this will be used when the user presses the Enter key.
- * **:value** is the current user-entered value.
- * **:highlighted-index** is the index of the suggestion that's currently highlighted.
-* **input-view-opts** contains any options that should be passed to the `input-view`.
-* **results-view** is an Om component that will be responsible for displaying autocompleted results. The state it receives will contain:
- * **:highlight-ch** is a channel that you should put the index of the highlighted item onto. In a traditional autocompleter, this will be used when the user hovers over a suggestion.
- * **:select-ch** is a channel that you should put the index of the selected item onto. In a traditional autocompleter, this will be used when the user clicks on a suggestion.
- * **:value** is the current user-entered value.
- * **:loading?** is a boolean that indicates if the suggestions are currently being loaded.
- * **:focused?** is a boolean that indicates if the input is currently focused.
- * **:suggestions** contains the suggestions.
- * **:highlighted-index** is the index of the suggestion that's currently highlighted.
-* **results-view-opts** contains any options that should be passed to the `results-view`.
+* **result-ch**: a channel that will receive an item once it's been selected.
+* **suggestions-fn**: a function that calculates the suggestions for a given input. It takes three arguments: the input value, a channel to place the suggestions (as a single seq), and a channel that, when closed, indicates that the input changed and you should cancel fetching suggestions (when applicable).
+* **container-view**: an Om component that will hold the `input-component` and `results-component` (described below). Typically, this will just render a simple div.
+* **container-opts**: any options that should be passed to the `container-view`.
+* **input-view**: an Om component that will be responsible for taking user input. The state it receives will contain:
+ * **focus-ch**: a channel that you should put `true` on whenever the input receives focus, and `false` when the input loses focus.
+ * **value-ch**: a channel that you should put the user-supplied value onto.
+ * **highlight-ch**: a channel that you should put the index of the highlighted item onto. In a traditional autocompleter, this will be used when the user presses the up/down arrow keys.
+ * **select-ch**: a channel that you should put the index of the selected item onto. In a traditional autocompleter, this will be used when the user presses the Enter key.
+ * **value**: the current user-entered value.
+ * **highlighted-index**: the index of the suggestion that's currently highlighted.
+* **input-view-opts**: any options that should be passed to the `input-view`.
+* **results-view**: an Om component that will be responsible for displaying autocompleted results. The state it receives will contain:
+ * **highlight-ch**: a channel that you should put the index of the highlighted item onto. In a traditional autocompleter, this will be used when the user hovers over a suggestion.
+ * **select-ch**: a channel that you should put the index of the selected item onto. In a traditional autocompleter, this will be used when the user clicks on a suggestion.
+ * **value**: the current user-entered value.
+ * **loading?**: a boolean that indicates if the suggestions are currently being loaded.
+ * **focused?**: a boolean that indicates if the input is currently focused.
+ * **suggestions**: the suggestions, as provided by the `suggestions-fn`.
+ * **highlighted-index**: the index of the suggestion that's currently highlighted.
+* **results-view-opts**: any options that should be passed to the `results-view`.
