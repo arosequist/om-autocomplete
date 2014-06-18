@@ -1,7 +1,19 @@
 (ns arosequist.om-autocomplete
-  (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan close! put! timeout]]
+  (:require-macros [cljs.core.async.macros :refer [go alt!]])
+  (:require [cljs.core.async :refer [chan close! put! take! timeout]]
             [om.core :as om :include-macros true]))
+
+(defn- handle-highlight
+  [owner idx]
+  (let [idx (min idx (count (om/get-state owner :suggestions)))
+        idx (max idx -1)]
+    (om/set-state! owner :highlighted-index idx)))
+
+(defn- handle-select
+  [owner result-ch idx]
+  (let [suggestions (om/get-state owner :suggestions)
+        item (nth suggestions idx)]
+    (put! result-ch [idx item])))
 
 (defn autocomplete [cursor owner {:keys [result-ch
                                          suggestions-fn
@@ -11,35 +23,19 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:focus-ch (chan)
-       :value-ch (chan)
-       :highlight-ch (chan)
-       :select-ch (chan)})
+      {:focus-ch (chan) :value-ch (chan) :highlight-ch (chan) :select-ch (chan)})
 
     om/IWillMount
     (will-mount [_]
-      (let [focus-ch (om/get-state owner :focus-ch)
-            value-ch (om/get-state owner :value-ch)
-            highlight-ch (om/get-state owner :highlight-ch)
-            select-ch (om/get-state owner :select-ch)]
-        (go (loop []
-          (om/set-state! owner :focused? (<! focus-ch))
-          (recur)))
-        (go (loop []
-          (om/set-state! owner :value (<! value-ch))
-          (recur)))
-        (go (loop []
-          (let [idx (<! highlight-ch)
-                idx (min idx (count (om/get-state owner :suggestions)))
-                idx (max idx -1)]
-            (om/set-state! owner :highlighted-index idx)
-            (recur))))
-        (go (loop []
-          (let [selected-index (<! select-ch)
-                suggestions (om/get-state owner :suggestions)
-                selected-item (nth suggestions selected-index)]
-            (put! result-ch [selected-index selected-item])
-            (recur))))))
+      (let [{:keys [focus-ch value-ch highlight-ch select-ch]} (om/get-state owner)]
+        (go
+         (loop []
+           (alt!
+            focus-ch ([v _] (om/set-state! owner :focused? v))
+            value-ch ([v _] (om/set-state! owner :value v))
+            highlight-ch ([v c] (handle-highlight owner v))
+            select-ch ([v _] (handle-select owner result-ch v)))
+           (recur)))))
 
     om/IDidUpdate
     (did-update [_ _ old]
@@ -54,9 +50,9 @@
                                     new-cancel-ch (chan)]
                                 (when old-suggestions-ch (close! old-suggestions-ch))
                                 (when old-cancel-ch (close! old-cancel-ch))
-                                (go
-                                  (when-let [suggestions (<! new-suggestions-ch)]
-                                    (om/update-state! owner
+                                (take! new-suggestions-ch
+                                       (fn [suggestions]
+                                         (om/update-state! owner
                                                       (fn [s]
                                                         (assoc s
                                                           :suggestions suggestions
@@ -75,20 +71,22 @@
       (om/build container-view cursor
                 {:state
                  {:input-component
-                  (om/build input-view cursor {:init-state {:focus-ch focus-ch
-                                                            :value-ch value-ch
-                                                            :highlight-ch highlight-ch
-                                                            :select-ch select-ch}
-                                               :state {:value value
-                                                       :highlighted-index highlighted-index}
-                                               :opts input-view-opts})
+                  (om/build input-view cursor
+                            {:init-state {:focus-ch focus-ch
+                                          :value-ch value-ch
+                                          :highlight-ch highlight-ch
+                                          :select-ch select-ch}
+                             :state {:value value
+                                     :highlighted-index highlighted-index}
+                             :opts input-view-opts})
                   :results-component
-                  (om/build results-view cursor {:init-state {:highlight-ch highlight-ch
-                                                              :select-ch select-ch}
-                                                 :state {:value value
-                                                         :loading? loading?
-                                                         :focused? focused?
-                                                         :suggestions suggestions
-                                                         :highlighted-index highlighted-index}
-                                                 :opts results-view-opts})}
+                  (om/build results-view cursor
+                            {:init-state {:highlight-ch highlight-ch
+                                          :select-ch select-ch}
+                             :state {:value value
+                                     :loading? loading?
+                                     :focused? focused?
+                                     :suggestions suggestions
+                                     :highlighted-index highlighted-index}
+                             :opts results-view-opts})}
                  :opts container-view-opts}))))
