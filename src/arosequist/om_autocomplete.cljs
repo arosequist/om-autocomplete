@@ -9,11 +9,19 @@
         idx (max idx -1)]
     (om/set-state! owner :highlighted-index idx)))
 
+(defn- reset-autocomplete-state!
+  [owner]
+  (do
+    (om/set-state! owner :highlighted-index 0)
+    (om/set-state! owner :value "")))
+
 (defn- handle-select
   [owner result-ch idx]
   (let [suggestions (om/get-state owner :suggestions)
         item (nth suggestions idx)]
-    (put! result-ch [idx item])))
+    (do
+      (put! result-ch [idx item])
+      (reset-autocomplete-state! owner))))
 
 (defn autocomplete [cursor owner {:keys [result-ch
                                          suggestions-fn
@@ -23,7 +31,8 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:focus-ch (chan) :value-ch (chan) :highlight-ch (chan) :select-ch (chan)})
+      {:focus-ch (chan) :value-ch (chan) :highlight-ch (chan) :select-ch (chan)
+       :highlighted-index 0})
 
     om/IWillMount
     (will-mount [_]
