@@ -46,7 +46,7 @@
     (render-state [_ {:keys [highlight-ch select-ch value loading? focused? suggestions highlighted-index]}]
       (let [display? (and focused? value (not= value ""))
             display (if display? "block" "none")
-            attrs #js {:className "dropdown-menu"
+            attrs #js {:className (str "dropdown-menu " class-name)
                        :style #js {:display display}}]
         (cond
          (and loading-view loading?)
