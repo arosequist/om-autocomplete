@@ -23,11 +23,9 @@
       (put! result-ch [idx item])
       (reset-autocomplete-state! owner))))
 
-(defn autocomplete [cursor owner {:keys [result-ch
-                                         suggestions-fn
-                                         container-view container-view-opts
-                                         input-view input-view-opts
-                                         results-view results-view-opts]}]
+(defn autocomplete
+  [cursor owner {:keys [result-ch  suggestions-fn  results-view results-view-opts
+                        input-view input-view-opts container-view-opts]}]
   (reify
     om/IInitState
     (init-state [_]
@@ -40,10 +38,10 @@
         (go
          (loop []
            (alt!
-            focus-ch ([v _] (om/set-state! owner :focused? v))
-            value-ch ([v _] (om/set-state! owner :value v))
+            focus-ch     ([v _] (om/set-state! owner :focused? v))
+            value-ch     ([v _] (om/set-state! owner :value v))
             highlight-ch ([v c] (handle-highlight owner v))
-            select-ch ([v _] (handle-select owner result-ch v)))
+            select-ch    ([v _] (handle-select owner result-ch v)))
            (recur)))))
 
     om/IDidUpdate
@@ -76,7 +74,8 @@
             (om/get-state owner :cancel-suggestions-ch)))))
 
     om/IRenderState
-    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index loading? focused? suggestions]}]
+    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value
+                             highlighted-index loading? focused? suggestions]}]
       (om/build container-view cursor
                 {:state
                  {:input-component
