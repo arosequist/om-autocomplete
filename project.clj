@@ -6,12 +6,12 @@
 
   :source-paths ["src"]
 
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-2173" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojurescript "0.0-2277" :scope "provided"]
                  [org.clojure/core.async "0.1.301.0-deb34a-alpha" :scope "provided"]
-                 [om "0.6.4" :scope "provided"]]
+                 [om "0.7.1" :scope "provided"]]
 
-  :plugins [[lein-cljsbuild "1.0.2"]]
+  :plugins [[lein-cljsbuild "1.0.3"]]
 
   :cljsbuild {
     :builds [{:id "dev"
