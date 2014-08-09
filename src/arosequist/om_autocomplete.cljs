@@ -24,8 +24,8 @@
       (reset-autocomplete-state! owner))))
 
 (defn autocomplete
-  [cursor owner {:keys [result-ch  suggestions-fn  results-view results-view-opts
-                        input-view input-view-opts container-view-opts]}]
+  [cursor owner {:keys [result-ch  suggestions-fn  results-view   results-view-opts
+                        input-view input-view-opts container-view container-view-opts]}]
   (reify
     om/IInitState
     (init-state [_]
