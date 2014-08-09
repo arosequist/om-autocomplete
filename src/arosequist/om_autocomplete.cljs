@@ -18,7 +18,7 @@
 (defn- handle-select
   [owner result-ch idx]
   (let [suggestions (om/get-state owner :suggestions)
-        item (nth suggestions idx)]
+        item (get (vec suggestions) idx)]
     (do
       (put! result-ch [idx item])
       (reset-autocomplete-state! owner))))
