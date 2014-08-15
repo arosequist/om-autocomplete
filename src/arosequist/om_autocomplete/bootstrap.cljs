@@ -10,7 +10,7 @@
     om/IRenderState
     (render-state [_ {:keys [input-component results-component]}]
       (dom/div #js {:className (str "dropdown " class-name)}
-        input-component results-component))))
+               input-component results-component))))
 
 (defn input-view [_ _ {:keys [class-name placeholder]}]
   (reify
@@ -25,14 +25,16 @@
              :value value
              :onFocus #(put! focus-ch true)
              :onBlur #(go (let [_ (<! (timeout 100))]
-                        ; if we don't wait, then the dropdown will disappear before its onClick renders and a selection won't be made
-                        ; this is a hack, of course, but I don't know how to fix it
+                            ;; If we don't wait, then the dropdown will disappear before
+                            ;; its onClick renders and a selection won't be made.
+                            ;; This is a hack, of course, but I don't know how to fix it
                         (put! focus-ch false)))
              :onKeyDown (fn [e]
                           (case (.-keyCode e)
-                            40 (put! highlight-ch (inc highlighted-index))
-                            38 (put! highlight-ch (dec highlighted-index))
-                            13 (put! select-ch highlighted-index)
+                            40 (put! highlight-ch (inc highlighted-index)) ;; up
+                            38 (put! highlight-ch (dec highlighted-index)) ;; down
+                            13 (put! select-ch highlighted-index) ;; enter
+                            9  (put! select-ch highlighted-index) ;; tab
                             nil))
              :onChange #(put! value-ch (.. % -target -value))}))))
 
@@ -44,50 +46,42 @@
     (render-state [_ {:keys [highlight-ch select-ch value loading? focused? suggestions highlighted-index]}]
       (let [display? (and focused? value (not= value ""))
             display (if display? "block" "none")
-            attrs #js {:className "dropdown-menu"
+            attrs #js {:className (str "dropdown-menu " class-name)
                        :style #js {:display display}}]
-        (if loading?
-          (dom/ul attrs
-            (om/build loading-view app {:opts loading-view-opts}))
-          (apply dom/ul attrs
-            (map-indexed
-              (fn [idx item]
-                (om/build render-item app {:init-state
-                                            {:highlight-ch highlight-ch
-                                             :select-ch select-ch}
-                                           :state
-                                            {:item item
-                                             :index idx
-                                             :highlighted-index highlighted-index}
-                                           :opts render-item-opts}))
-              suggestions)))))))
+        (cond
+         (and loading-view loading?)
+         (dom/ul attrs
+                 (om/build loading-view app {:opts loading-view-opts}))
+
+         (not (empty? suggestions))
+         (apply dom/ul attrs
+                (map-indexed
+                 (fn [idx item]
+                   (om/build render-item app {:init-state
+                                              {:highlight-ch highlight-ch
+                                               :select-ch select-ch}
+                                              :state
+                                              {:item item
+                                               :index idx
+                                               :highlighted-index highlighted-index}
+                                              :opts render-item-opts}))
+                 suggestions))
+
+         :otherwise (dom/ul nil))))))
 
 (defn render-item [app owner {:keys [class-name text-fn]}]
   (reify
-    om/IInitState
-    (init-state [_]
-      {:click-ch (chan)})
-
-    om/IWillMount
-    (will-mount [_]
-      (let [click-ch (om/get-state owner :click-ch)
-            select-ch (om/get-state owner :select-ch)]
-        (go (loop []
-          (<! click-ch)
-          (put! select-ch (om/get-state owner :index))))))
 
     om/IDidMount
     (did-mount [this]
-      (let [index (om/get-state owner :index)
-            highlight-ch (om/get-state owner :highlight-ch)
-            click-ch (om/get-state owner :click-ch)
+      (let [{:keys [index highlight-ch select-ch]} (om/get-state owner)
             node (om/get-node owner)]
         (gevents/listen node (.-MOUSEOVER gevents/EventType) #(put! highlight-ch index))
-        (gevents/listen node (.-CLICK gevents/EventType) #(put! click-ch true))))
+        (gevents/listen node (.-CLICK gevents/EventType) #(put! select-ch index))))
 
     om/IRenderState
-    (render-state [_ {:keys [click-ch select-ch item index highlighted-index]}]
+    (render-state [_ {:keys [item index highlighted-index]}]
       (let [highlighted? (= index highlighted-index)]
         (dom/li #js {:className (if highlighted? (str "active " class-name) class-name)}
-          (dom/a #js {:href "#"}
+          (dom/a #js {:href "#" :onClick (fn [_] false)}
             (text-fn item index)))))))
