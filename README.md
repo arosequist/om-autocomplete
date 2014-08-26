@@ -6,7 +6,7 @@ An autocomplete component for [Om](http://github.com/swannodette/om).
 
 * [Bootstrap](http://arosequist.github.io/om-autocomplete/bootstrap/index.html) ([source](https://github.com/arosequist/om-autocomplete/blob/master/examples/bootstrap/src/arosequist/om_autocomplete/examples/bootstrap.cljs)) demonstrates basic usage of the built-in Twitter Bootstrap components. The suggestions recommended are just variants of the input text.
 
-* [Movies](http://arosequist.github.io/om-autocomplete/movies/index.html) ([source](https://github.com/arosequist/om-autocomplete/blob/master/examples/movies/src/arosequist/om_autocomplete/examples/movies.cljs)) uses a remote webservice to fetch suggestions.
+* [Movies](http://arosequist.github.io/om-autocomplete/movies/index.html) ([source](https://github.com/arosequist/om-autocomplete/blob/master/examples/movies/src/arosequist/om_autocomplete/examples/movies.cljs)) uses a remote webservice to fetch suggestions. _The service is down, so this demo doesn't currently work. Will update when I can replace it with another one._
 
 ## Components
 
