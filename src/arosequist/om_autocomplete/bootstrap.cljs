@@ -15,7 +15,7 @@
 (defn input-view [_ _ {:keys [class-name placeholder wait-before-blur]}]
   (reify
     om/IRenderState
-    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index]}]
+    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index displayed?]}]
       (dom/input
        #js {:type "text"
             :autoComplete "off"
@@ -33,8 +33,8 @@
                          (case (.-keyCode e)
                            40 (put! highlight-ch (inc highlighted-index)) ;; up
                            38 (put! highlight-ch (dec highlighted-index)) ;; down
-                           13 (put! select-ch highlighted-index) ;; enter
-                           9  (put! select-ch highlighted-index) ;; tab
+                           13 (if displayed? (put! select-ch highlighted-index)) ;; enter
+                           9  (if displayed? (put! select-ch highlighted-index)) ;; tab
                            nil))
             :onChange #(put! value-ch (.. % -target -value))}))))
 

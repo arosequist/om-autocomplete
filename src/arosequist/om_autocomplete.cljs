@@ -13,7 +13,8 @@
   [owner]
   (do
     (om/set-state! owner :highlighted-index 0)
-    (om/set-state! owner :value "")))
+    (om/set-state! owner :value "")
+    (om/set-state! owner :suggestions nil)))
 
 (defn- handle-select
   [owner result-ch idx]
@@ -48,7 +49,7 @@
     (did-update [_ _ old]
       (let [old-value (:value old)
             new-value (om/get-state owner :value)]
-        (when (not= old-value new-value)
+        (when (and (not= old-value new-value) (not= new-value ""))
           (om/update-state! owner
                             (fn [state]
                               (let [old-suggestions-ch (:suggestions-ch state)
@@ -85,7 +86,8 @@
                                           :highlight-ch highlight-ch
                                           :select-ch select-ch}
                              :state {:value value
-                                     :highlighted-index highlighted-index}
+                                     :highlighted-index highlighted-index
+                                     :displayed? (> (count suggestions) 0)}
                              :opts input-view-opts})
                   :results-component
                   (om/build results-view cursor
