@@ -13,8 +13,7 @@
   [owner]
   (do
     (om/set-state! owner :highlighted-index 0)
-    (om/set-state! owner :value "")
-    (om/set-state! owner :suggestions nil)))
+    (om/set-state! owner :value "")))
 
 (defn- handle-select
   [owner result-ch idx]
@@ -49,7 +48,7 @@
     (did-update [_ _ old]
       (let [old-value (:value old)
             new-value (om/get-state owner :value)]
-        (when (and (not= old-value new-value) (not= new-value ""))
+        (when (not= old-value new-value)
           (om/update-state! owner
                             (fn [state]
                               (let [old-suggestions-ch (:suggestions-ch state)
