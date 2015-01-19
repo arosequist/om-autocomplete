@@ -85,7 +85,8 @@
                                           :highlight-ch highlight-ch
                                           :select-ch select-ch}
                              :state {:value value
-                                     :highlighted-index highlighted-index}
+                                     :highlighted-index highlighted-index
+                                     :displayed? (> (count suggestions) 0)}
                              :opts input-view-opts})
                   :results-component
                   (om/build results-view cursor

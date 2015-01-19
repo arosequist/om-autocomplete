@@ -12,32 +12,32 @@
       (dom/div #js {:className (str "dropdown " class-name)}
                input-component results-component))))
 
-(defn input-view [_ _ {:keys [class-name placeholder id]}]
+(defn input-view [_ _ {:keys [class-name placeholder id wait-before-blur]}]
   (reify
     om/IRenderState
-    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index]}]
+    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index displayed?]}]
       (dom/input
-        #js {:id id
-             :type "text"
-             :autoComplete "off"
-             :spellCheck "false"
-             :className (str "form-control " class-name)
-             :placeholder placeholder
-             :value value
-             :onFocus #(put! focus-ch true)
-             :onBlur #(go (let [_ (<! (timeout 100))]
-                            ;; If we don't wait, then the dropdown will disappear before
-                            ;; its onClick renders and a selection won't be made.
-                            ;; This is a hack, of course, but I don't know how to fix it
-                        (put! focus-ch false)))
-             :onKeyDown (fn [e]
-                          (case (.-keyCode e)
-                            40 (put! highlight-ch (inc highlighted-index)) ;; up
-                            38 (put! highlight-ch (dec highlighted-index)) ;; down
-                            13 (put! select-ch highlighted-index) ;; enter
-                            9  (put! select-ch highlighted-index) ;; tab
-                            nil))
-             :onChange #(put! value-ch (.. % -target -value))}))))
+       #js {:id id
+            :type "text"
+            :autoComplete "off"
+            :spellCheck "false"
+            :className (str "form-control " class-name)
+            :placeholder placeholder
+            :value value
+            :onFocus #(put! focus-ch true)
+            :onBlur #(go (let [_ (<! (timeout (or wait-before-blur 100)))]
+                           ;; If we don't wait, then the dropdown will disappear before
+                           ;; its onClick renders and a selection won't be made.
+                           ;; This is a hack, of course, but I don't know how to fix it
+                           (put! focus-ch false)))
+            :onKeyDown (fn [e]
+                         (case (.-keyCode e)
+                           40 (put! highlight-ch (inc highlighted-index)) ;; up
+                           38 (put! highlight-ch (dec highlighted-index)) ;; down
+                           13 (if displayed? (put! select-ch highlighted-index)) ;; enter
+                           9  (if displayed? (put! select-ch highlighted-index)) ;; tab
+                           nil))
+            :onChange #(put! value-ch (.. % -target -value))}))))
 
 (defn results-view [app _ {:keys [class-name
                                   loading-view loading-view-opts
@@ -69,7 +69,7 @@
                                               :opts render-item-opts}))
                  suggestions))
 
-         :otherwise (dom/ul #js {:style #js {:display "none"}}))))))
+         :otherwise (dom/ul #js {:className class-name :style #js {:display "none"}}))))))
 
 (defn render-item [app owner {:keys [class-name text-fn]}]
   (reify
