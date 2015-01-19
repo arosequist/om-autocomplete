@@ -67,7 +67,7 @@
                                               :opts render-item-opts}))
                  suggestions))
 
-         :otherwise (dom/ul nil))))))
+         :otherwise (dom/ul #js {:style #js {:display "none"}}))))))
 
 (defn render-item [app owner {:keys [class-name text-fn]}]
   (reify
