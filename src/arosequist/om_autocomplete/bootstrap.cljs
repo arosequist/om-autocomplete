@@ -12,12 +12,13 @@
       (dom/div #js {:className (str "dropdown " class-name)}
                input-component results-component))))
 
-(defn input-view [_ _ {:keys [class-name placeholder]}]
+(defn input-view [_ _ {:keys [class-name placeholder id]}]
   (reify
     om/IRenderState
     (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index]}]
       (dom/input
-        #js {:type "text"
+        #js {:id id
+             :type "text"
              :autoComplete "off"
              :spellCheck "false"
              :className (str "form-control " class-name)
@@ -48,6 +49,7 @@
             display (if display? "block" "none")
             attrs #js {:className (str "dropdown-menu " class-name)
                        :style #js {:display display}}]
+        
         (cond
          (and loading-view loading?)
          (dom/ul attrs
