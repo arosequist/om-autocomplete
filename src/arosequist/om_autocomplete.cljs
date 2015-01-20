@@ -17,7 +17,7 @@
 
 (defn- handle-select
   [owner result-ch idx]
-  (let [suggestions (om/get-state owner :suggestions)
+  (let [suggestions (om/get-state owner :suggestions) 
         item (get (vec suggestions) idx)]
     (do
       (put! result-ch [idx item])
@@ -48,40 +48,41 @@
                 (let [old-value (:value old)
                       new-value (om/get-state owner :value)]
                   (when (not= old-value new-value)
-                    (om/update-state! owner
-                                      (fn [state]
-                                        (let [old-channels (:channels state)
-                                              old-suggestions-ch (:suggestions-ch old-channels)
-                                              old-cancel-ch (:cancel-suggestions-ch old-channels)
-                                              new-suggestions-ch (chan)
-                                              new-cancel-ch (chan)]
-                                          (when old-suggestions-ch (close! old-suggestions-ch))
-                                          (when old-cancel-ch (close! old-cancel-ch))
-                                          (take! new-suggestions-ch
-                                                 (fn [suggestions]
-                                                   (when suggestions
-                                                     (om/update-state! owner (fn [s] (assoc s
-                                                                                       :suggestions suggestions
-                                                                                       :loading? false))))))
-                                          
-                                          (suggestions-fn new-value new-suggestions-ch new-cancel-ch)
-                                          
-                                          (assoc (update-in state [:channels] 
-                                                            #(assoc % 
-                                                               :suggestions-ch new-suggestions-ch
-                                                               :cancel-suggestions-ch new-cancel-ch))
-                                            :loading? true)))))))
+                    (om/update-state! 
+                      owner
+                      (fn [state]
+                        (let [old-channels (:channels state)
+                              old-suggestions-ch (:suggestions-ch old-channels)
+                              old-cancel-ch (:cancel-suggestions-ch old-channels)
+                              new-suggestions-ch (chan)
+                              new-cancel-ch (chan)]
+                          (when old-suggestions-ch (close! old-suggestions-ch))
+                          (when old-cancel-ch (close! old-cancel-ch))
+                          (take! new-suggestions-ch
+                                 (fn [suggestions]
+                                   (when suggestions
+                                     (om/update-state! owner (fn [s] (assoc s
+                                                                       :suggestions suggestions
+                                                                       :loading? false))))))
+                          
+                          (suggestions-fn new-value new-suggestions-ch new-cancel-ch)
+                          
+                          (assoc (update-in state [:channels] 
+                                            #(assoc % 
+                                               :suggestions-ch new-suggestions-ch
+                                               :cancel-suggestions-ch new-cancel-ch))
+                            :loading? true)))))))
     om/IWillUnmount
     (will-unmount [_]
-                 (let [{:keys [focus-ch value-ch highlight-ch select-ch channels]} (om/get-state owner)]
-                   (close! focus-ch)
-                   (close! value-ch)
-                   (close! highlight-ch)
-                   (close! select-ch)
-                   (let [cancel-ch (:cancel-suggestions-ch channels)
-                         suggestions-ch (:suggestions-ch channels)]
-                     (when cancel-ch (close! cancel-ch))
-                     (when suggestions-ch (close! suggestions-ch)))))
+                  (let [{:keys [focus-ch value-ch highlight-ch select-ch channels]} (om/get-state owner)]
+                    (close! focus-ch)
+                    (close! value-ch)
+                    (close! highlight-ch)
+                    (close! select-ch)
+                    (let [cancel-ch (:cancel-suggestions-ch channels)
+                          suggestions-ch (:suggestions-ch channels)]
+                      (when cancel-ch (close! cancel-ch))
+                      (when suggestions-ch (close! suggestions-ch)))))
     om/IRenderState
     (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value
                              highlighted-index loading? focused? suggestions]}]

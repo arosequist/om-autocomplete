@@ -9,7 +9,7 @@
   (reify
     om/IRenderState
     (render-state [_ {:keys [input-component results-component]}]
-      (dom/div #js {:className (str "dropdown " class-name)}
+      (dom/div #js {:className (str "dropdown " class-name) :style #js {:display "inline-block"}}
                input-component results-component))))
 
 (defn input-view [_ _ {:keys [class-name placeholder id wait-before-blur]}]
@@ -21,7 +21,7 @@
             :type "text"
             :autoComplete "off"
             :spellCheck "false"
-            :className (str "form-control " class-name)
+            :className class-name
             :placeholder placeholder
             :value value
             :onFocus #(put! focus-ch true)
@@ -79,7 +79,8 @@
       (let [{:keys [index highlight-ch select-ch]} (om/get-state owner)
             node (om/get-node owner)]
         (gevents/listen node (.-MOUSEOVER gevents/EventType) #(put! highlight-ch index))
-        (gevents/listen node (.-CLICK gevents/EventType) #(put! select-ch index))))
+        (gevents/listen node (.-CLICK gevents/EventType) #(put! select-ch index))
+        ))
 
     om/IRenderState
     (render-state [_ {:keys [item index highlighted-index]}]
