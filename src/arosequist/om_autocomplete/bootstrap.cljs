@@ -9,7 +9,7 @@
   (reify
     om/IRenderState
     (render-state [_ {:keys [input-component results-component]}]
-      (dom/div #js {:className (str "dropdown " class-name) :style #js {:display "inline-block"}}
+      (dom/div #js {:className (str "dropdown " class-name)}
                input-component results-component))))
 
 (defn input-view [_ _ {:keys [class-name placeholder id wait-before-blur]}]
@@ -24,12 +24,16 @@
             :className class-name
             :placeholder placeholder
             :value value
-            :onFocus #(put! focus-ch true)
-            :onBlur #(go (let [_ (<! (timeout (or wait-before-blur 100)))]
+            :onFocus (fn [e]
+                       (.preventDefault e)
+                       (put! focus-ch true))
+            :onBlur (fn [e]
+                      (.preventDefault e)
+                      (go (let [_ (<! (timeout (or wait-before-blur 100)))]
                            ;; If we don't wait, then the dropdown will disappear before
                            ;; its onClick renders and a selection won't be made.
                            ;; This is a hack, of course, but I don't know how to fix it
-                           (put! focus-ch false)))
+                           (put! focus-ch false))))
             :onKeyDown (fn [e]
                          (case (.-keyCode e)
                            40 (put! highlight-ch (inc highlighted-index)) ;; up
@@ -37,7 +41,9 @@
                            13 (if displayed? (put! select-ch highlighted-index)) ;; enter
                            9  (if displayed? (put! select-ch highlighted-index)) ;; tab
                            nil))
-            :onChange #(put! value-ch (.. % -target -value))}))))
+            :onChange (fn [e]
+                        (.preventDefault e)
+                        (put! value-ch (.. e -target -value)))}))))
 
 (defn results-view [app _ {:keys [class-name
                                   loading-view loading-view-opts
@@ -49,7 +55,7 @@
             display (if display? "block" "none")
             attrs #js {:className (str "dropdown-menu " class-name)
                        :style #js {:display display}}]
-        
+
         (cond
          (and loading-view loading?)
          (dom/ul attrs
@@ -86,5 +92,5 @@
     (render-state [_ {:keys [item index highlighted-index]}]
       (let [highlighted? (= index highlighted-index)]
         (dom/li #js {:className (if highlighted? (str "active " class-name) class-name)}
-          (dom/a #js {:href "#" :onClick (fn [_] false)}
+          (dom/a #js {:href "#" :onClick (fn [e] (.preventDefault e))}
             (text-fn item index)))))))
