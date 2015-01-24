@@ -12,10 +12,20 @@
       (dom/div #js {:className (str "dropdown " class-name)}
                input-component results-component))))
 
-(defn input-view [_ _ {:keys [class-name placeholder id wait-before-blur]}]
+(defn input-view [_ owner {:keys [class-name placeholder id wait-before-blur]}]
   (reify
+    om/IWillMount
+    (will-mount [_]
+                (let [{:keys [input-focus-ch]} (om/get-state owner)]
+                  (go
+                    (loop []
+                      (when-some
+                        [focus (<! input-focus-ch)]
+                          (.focus (om/get-node owner "input"))
+                          (om/set-state! owner :force-rerender! true))
+                      (recur)))))
     om/IRenderState
-    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index displayed?]}]
+    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch input-focus-ch value highlighted-index displayed?]}]
       (dom/input
        #js {:id id
             :type "text"
@@ -24,6 +34,7 @@
             :className class-name
             :placeholder placeholder
             :value value
+            :ref "input"
             :onFocus (fn [e]
                        (.preventDefault e)
                        (put! focus-ch true))

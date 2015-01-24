@@ -17,7 +17,7 @@
 
 (defn- handle-select
   [owner result-ch idx]
-  (let [suggestions (om/get-state owner :suggestions) 
+  (let [suggestions (om/get-state owner :suggestions)
         item (get (vec suggestions) idx)]
     (do
       (put! result-ch [idx item])
@@ -25,12 +25,12 @@
 
 (defn autocomplete
   [cursor owner {:keys [result-ch  suggestions-fn  results-view   results-view-opts
-                        input-view input-view-opts container-view container-view-opts]}]
+                        input-view input-view-opts input-focus-ch container-view container-view-opts]}]
   (reify
     om/IInitState
     (init-state [_]
                 {:focus-ch (chan) :value-ch (chan) :highlight-ch (chan) :select-ch (chan) :channels {} :highlighted-index 0})
-    
+
     om/IWillMount
     (will-mount [_]
                 (let [{:keys [focus-ch value-ch highlight-ch select-ch]} (om/get-state owner)]
@@ -42,13 +42,13 @@
                         highlight-ch ([v c] (handle-highlight owner v))
                         select-ch    ([v _] (handle-select owner result-ch v)))
                       (recur)))))
-    
+
     om/IDidUpdate
     (did-update [_ _ old]
                 (let [old-value (:value old)
                       new-value (om/get-state owner :value)]
                   (when (not= old-value new-value)
-                    (om/update-state! 
+                    (om/update-state!
                       owner
                       (fn [state]
                         (let [old-channels (:channels state)
@@ -64,11 +64,11 @@
                                      (om/update-state! owner (fn [s] (assoc s
                                                                        :suggestions suggestions
                                                                        :loading? false))))))
-                          
+
                           (suggestions-fn new-value new-suggestions-ch new-cancel-ch)
-                          
-                          (assoc (update-in state [:channels] 
-                                            #(assoc % 
+
+                          (assoc (update-in state [:channels]
+                                            #(assoc %
                                                :suggestions-ch new-suggestions-ch
                                                :cancel-suggestions-ch new-cancel-ch))
                             :loading? true)))))))
@@ -93,7 +93,8 @@
                                         {:init-state {:focus-ch focus-ch
                                                       :value-ch value-ch
                                                       :highlight-ch highlight-ch
-                                                      :select-ch select-ch}
+                                                      :select-ch select-ch
+                                                      :input-focus-ch input-focus-ch}
                                          :state {:value value
                                                  :highlighted-index highlighted-index
                                                  :displayed? (> (count suggestions) 0)}
