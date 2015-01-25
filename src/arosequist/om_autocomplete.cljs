@@ -25,7 +25,7 @@
 
 (defn autocomplete
   [cursor owner {:keys [result-ch  suggestions-fn  results-view   results-view-opts
-                        input-view input-view-opts input-focus-ch container-view container-view-opts]}]
+                        input-view input-focus-ch input-view-opts container-view container-view-opts]}]
   (reify
     om/IInitState
     (init-state [_]
