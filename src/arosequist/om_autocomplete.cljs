@@ -25,24 +25,23 @@
 
 (defn autocomplete
   [cursor owner {:keys [result-ch  suggestions-fn  results-view   results-view-opts
-                        input-view input-focus-ch input-view-opts container-view container-view-opts]}]
+                        input-view input-focus-ch  backspace-ch input-view-opts container-view container-view-opts]}]
   (reify
     om/IInitState
     (init-state [_]
-                {:focus-ch (chan) :value-ch (chan) :highlight-ch (chan) :select-ch (chan) :channels {} :highlighted-index 0})
-
+                {:focus-ch (chan) :value-ch (chan) :highlight-ch (chan) :select-ch (chan) :mouse-ch (chan) :channels {} :highlighted-index 0})
     om/IWillMount
     (will-mount [_]
-                (let [{:keys [focus-ch value-ch highlight-ch select-ch]} (om/get-state owner)]
+                (let [{:keys [focus-ch value-ch highlight-ch select-ch mouse-ch]} (om/get-state owner)]
                   (go
                     (loop []
                       (alt!
                         focus-ch     ([v _] (om/set-state! owner :focused? v))
                         value-ch     ([v _] (om/set-state! owner :value v))
                         highlight-ch ([v c] (handle-highlight owner v))
-                        select-ch    ([v _] (handle-select owner result-ch v)))
+                        select-ch    ([v _] (handle-select owner result-ch v))
+                        mouse-ch     ([v _] (om/set-state! owner :mouse? v)))
                       (recur)))))
-
     om/IDidUpdate
     (did-update [_ _ old]
                 (let [old-value (:value old)
@@ -74,18 +73,19 @@
                             :loading? true)))))))
     om/IWillUnmount
     (will-unmount [_]
-                  (let [{:keys [focus-ch value-ch highlight-ch select-ch channels]} (om/get-state owner)]
+                  (let [{:keys [focus-ch value-ch highlight-ch select-ch mouse-ch channels]} (om/get-state owner)]
                     (close! focus-ch)
                     (close! value-ch)
                     (close! highlight-ch)
                     (close! select-ch)
+                    (close! mouse-ch)
                     (let [cancel-ch (:cancel-suggestions-ch channels)
                           suggestions-ch (:suggestions-ch channels)]
                       (when cancel-ch (close! cancel-ch))
                       (when suggestions-ch (close! suggestions-ch)))))
     om/IRenderState
-    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value
-                             highlighted-index loading? focused? suggestions]}]
+    (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch mouse-ch value
+                             highlighted-index loading? focused? mouse? suggestions]}]
                   (om/build container-view cursor
                             {:state
                              {:input-component
@@ -94,15 +94,18 @@
                                                       :value-ch value-ch
                                                       :highlight-ch highlight-ch
                                                       :select-ch select-ch
-                                                      :input-focus-ch input-focus-ch}
+                                                      :input-focus-ch input-focus-ch
+                                                      :backspace-ch backspace-ch}
                                          :state {:value value
                                                  :highlighted-index highlighted-index
-                                                 :displayed? (> (count suggestions) 0)}
+                                                 :displayed? (> (count suggestions) 0)
+                                                 :mouse? mouse?}
                                          :opts input-view-opts})
                               :results-component
                               (om/build results-view cursor
                                         {:init-state {:highlight-ch highlight-ch
-                                                      :select-ch select-ch}
+                                                      :select-ch select-ch
+                                                      :mouse-ch mouse-ch}
                                          :state {:value value
                                                  :loading? loading?
                                                  :focused? focused?
