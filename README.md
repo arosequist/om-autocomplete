@@ -30,9 +30,22 @@ To use the component with sensible defaults, use these parameters:
             the suggestion call should also listen to cancel-ch. The autocomplete
             component closes the cancel-ch whenever the call should be canceled.
 
-         :result-ch         result-ch
+         :result-ch         result-ch}})
             ; A channel where the autocomplete component puts the result
             once it is selected.
+```
+
+Here is a documentation of all possible options:
+
+```clojure
+(ns arosequist.example
+  (:require [arosequist.om-autocomplete :as ac]))
+
+
+(om/build ac/autocomplete {}
+    {:opts
+        {:suggestions-fn    (fn [value suggestions-ch cancel-ch] ...)
+         :result-ch         result-ch
 
          :result-text-fn    (fn [item _] (:name item))
             ; (optional) A function that, given a suggested item,
@@ -78,9 +91,22 @@ To use the component with sensible defaults, use these parameters:
                 ; (optional) An class for the result item element
 ```
 
-
 ### Bootstrap API
 
-om-autocomplete contains some convenience functions for pages that are using Twitter Boostrap. They are located in the `arosequist.om-autocomplete.bootstrap` namespace. *TODO: More documentation here*
+om-autocomplete contains some convenience functions for pages that are using Twitter Boostrap. They are located in the `arosequist.om-autocomplete.bootstrap` namespace.
 
-Much of the code in this namespace isn't Bootstrap-specific, and I expect to create other helper namespaces for common use cases.
+If you want to add Boostrap specific classes to your component, wrap your options with `add-bootstrap-m` like this :
+
+```clojure
+(ns arosequist.example
+  (:require [arosequist.om-autocomplete :as ac]
+            [arosequist.om-autocomplete.bootstrap :as acb]))
+
+(om/build ac/autocomplete
+    {}
+    (acb/add-bootstrap-m
+      {:opts
+       {:result-ch      result-ch
+        :result-text-fn (fn [item _] (str item))
+        :suggestions-fn suggestions}}))
+```
