@@ -8,7 +8,7 @@ An autocomplete component for [Om](http://github.com/swannodette/om).
 
 * [Movies](http://arosequist.github.io/om-autocomplete/movies/index.html) ([source](examples/movies/src/arosequist/om_autocomplete/examples/movies.cljs)) uses a remote webservice to fetch suggestions.
 
-## API documentation
+## Component documentation
 
 Use the component this way. If you use Leiningen, put this in `project.clj`:
 
@@ -91,7 +91,7 @@ Here is a documentation of all possible options:
                 ; (optional) An class for the result item element
 ```
 
-### Bootstrap API
+### Bootstrap wrapper
 
 om-autocomplete contains some convenience functions for pages that are using Twitter Boostrap. They are located in the `arosequist.om-autocomplete.bootstrap` namespace.
 
