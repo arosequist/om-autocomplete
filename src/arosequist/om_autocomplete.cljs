@@ -1,4 +1,21 @@
 (ns arosequist.om-autocomplete
+  "Here's a mockup of a basic autocompleter:
+
+  <p align='center'><img src='http://arosequist.github.io/om-autocomplete/components.png' /></p>
+
+  The `arosequist.om-autocomplete` namespace contains a single function, `autocomplete`, which is an Om component that handles the core autocomplete logic, but does not directly render any DOM elements. Instead, you give it three main components:
+
+  1. The **container view** just holds the other two components. Typically, this will render a simple wrapper div.
+  1. The **input view** is responsible for taking user input.
+  1. The **results view** displays the suggestions that were generated based on the input.
+
+  Some important terms are:
+
+  * The input has **focus** that is either true or false, normally corresponding to the normal HTML focus. You'll often want to hide the results when the input loses focus.
+  * The input also has a **value** ('uni' in the example). When this changes, the list of suggestions will be refreshed.
+  * A **suggestion** can be anything. Your results view just needs to know how to display it. In the example, each suggestion contains the flag and country name.
+  * The **highlighted** suggestion is usually changed by hovering the mouse or pressing the up/down arrow keys. Here, 'United States' is the highlighted suggestion.
+  * A suggestion can be **selected**, typically by clicking the mouse or pressing enter. This usually signals the end of the autocomplete workflow."
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan close! put! take! timeout]]
             [om.core :as om :include-macros true]
@@ -37,7 +54,7 @@
 (defn- container-view [_ _ {:keys [class-name id]}]
   (reify
     om/IRenderState
-    (render-state [_ {:keys [input-component results-component mouse-ch]}]
+    (render-state [_ {:keys [input-component results-component]}]
                   (dom/div #js {:id        id
                                 :className class-name}
                            input-component results-component))))
@@ -47,11 +64,7 @@
     om/IWillMount
     (will-mount [_]
                 (let [{:keys [input-focus-ch]} (om/get-state owner)]
-                  (go
-                    (loop []
-                      (when-some [input-focus (<! input-focus-ch)]
-                                 (.focus (om/get-node owner "input"))
-                                 (recur))))))
+                  (when input-focus-ch (wait-on-channel input-focus-ch #(.focus (om/get-node owner "input"))))))
     om/IRenderState
     (render-state [_ {:keys [focus-ch value-ch highlight-ch select-ch value highlighted-index mouse? displayed?]}]
                   (dom/input
@@ -71,22 +84,21 @@
                                      (put! focus-ch false))
                                    (.preventDefault e))
                          :onKeyDown (fn [e]
-                                      (on-key-down
-                                        e value
-                                        (fn [e]
-                                          (let [keyCode (.-keyCode e)]
-                                            (case (.-keyCode e)
-                                              40 (put! highlight-ch (inc highlighted-index)) ;; up
-                                              38 (put! highlight-ch (dec highlighted-index)) ;; down
-                                              13 (when displayed? (put! select-ch highlighted-index)) ;; enter
-                                              9  (when displayed? (put! select-ch highlighted-index)) ;; tab
-                                              nil)
-                                            (when (contains? #{40 38 13 9} keyCode) (.preventDefault e))))))
+                                      (let [handler-fn (fn [e]
+                                                         (let [keyCode (.-keyCode e)]
+                                                           (case (.-keyCode e)
+                                                             40 (put! highlight-ch (inc highlighted-index)) ;; up
+                                                             38 (put! highlight-ch (dec highlighted-index)) ;; down
+                                                             13 (when displayed? (put! select-ch highlighted-index)) ;; enter
+                                                             9  (when displayed? (put! select-ch highlighted-index)) ;; tab
+                                                             nil)
+                                                           (when (contains? #{40 38 13 9} keyCode) (.preventDefault e))))]
+                                        (if on-key-down (on-key-down e value handler-fn) (handler-fn e))))
                          :onChange (fn [e]
                                      (put! value-ch (.. e -target -value))
                                      (.preventDefault e))}))))
 
-(defn- loading-default [_ owner {:keys [class-name id]}]
+(defn- loading-default [_ owner {:keys [class-name id render-loading]}]
   (reify
     om/IRender
     (render [_]
@@ -113,7 +125,7 @@
                                    (text-fn item index)))))))
 
 
-(defn- results-view [app _ {:keys [class-name id loading loading-opts result-item result-item-opts]}]
+(defn- results-default [app _ {:keys [class-name id loading loading-opts result-item-opts]}]
   (reify
     om/IRenderState
     (render-state [_ {:keys [highlight-ch select-ch value loading? focused? mouse-ch suggestions highlighted-index]}]
@@ -127,27 +139,25 @@
                                                                  (.preventDefault e))
                                                  :onMouseLeave (fn [e]
                                                                  (put! mouse-ch false)
-                                                                 (.preventDefault e))}
-                        loading-view     (if-not (nil? loading)     loading     loading-default)
-                        result-item-view (if-not (nil? result-item) result-item result-item-default)]
+                                                                 (.preventDefault e))}]
                     (cond
                       (and loading-view loading?)
-                      (dom/ul attrs (om/build loading-view app {:opts loading-opts}))
+                      (dom/ul attrs (om/build loading-default app {:opts loading-opts}))
                       (not (empty? suggestions))
                       (apply dom/ul attrs
                              (map-indexed
                                (fn [idx item]
-                                 (om/build result-item-view app {:init-state {:highlight-ch highlight-ch
-                                                                              :select-ch    select-ch}
-                                                                 :state      {:item item
-                                                                              :index idx
-                                                                              :highlighted-index highlighted-index}
-                                                                 :opts       result-item-opts}))
+                                 (om/build result-item-default app {:init-state {:highlight-ch highlight-ch
+                                                                                 :select-ch    select-ch}
+                                                                    :state      {:item item
+                                                                                 :index idx
+                                                                                 :highlighted-index highlighted-index}
+                                                                    :opts       result-item-opts}))
                                suggestions))
                       :otherwise (dom/ul #js {:className class-name :style #js {:display "none"}}))))))
 
 (defn autocomplete
-  [cursor owner {:keys [result-ch suggestions-fn result-text-fn container-opts input-opts results-opts]}]
+  [cursor owner {:keys [result-ch suggestions-fn result-text-fn container-opts input-opts results results-opts]}]
   (reify
     om/IInitState
     (init-state [_]
@@ -222,14 +232,15 @@
                                                  :mouse?            mouse?}
                                          :opts (dissoc input-opts :input-focus-ch)})
                               :results-component
-                              (om/build results-view cursor
-                                        {:init-state {:highlight-ch highlight-ch
-                                                      :select-ch    select-ch
-                                                      :mouse-ch     mouse-ch}
-                                         :state {:value             value
-                                                 :loading?          loading?
-                                                 :focused?          focused?
-                                                 :suggestions       suggestions
-                                                 :highlighted-index highlighted-index}
-                                         :opts (assoc-in results-opts [:result-item-opts :result-text-fn] result-text-fn)})}
+                              (let [results-view (if-not (nil? results) results results-default)]
+                                (om/build results-view cursor
+                                          {:init-state {:highlight-ch highlight-ch
+                                                        :select-ch    select-ch
+                                                        :mouse-ch     mouse-ch}
+                                           :state {:value             value
+                                                   :loading?          loading?
+                                                   :focused?          focused?
+                                                   :suggestions       suggestions
+                                                   :highlighted-index highlighted-index}
+                                           :opts (assoc-in results-opts [:result-item-opts :result-text-fn] result-text-fn)}))}
                              :opts container-opts}))))
