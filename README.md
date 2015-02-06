@@ -1,6 +1,6 @@
 # om-autocomplete
 
-An autocomplete component for [Om](http://github.com/swannodette/om)ob.
+An autocomplete component for [Om](http://github.com/swannodette/om).
 
 ## Examples
 
@@ -115,6 +115,8 @@ If you want to add Boostrap specific classes to your component, wrap your option
 
 ```
 git subtree push --prefix examples/ origin gh-pages
+git checkout gh-pages
+git reset --hard origin/gh-pages
 lein cljsbuild once movies
 lein cljsbuild once bootstrap
 git add bootstrap/app.js movies/app.js
