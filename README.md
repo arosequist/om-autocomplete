@@ -1,12 +1,12 @@
 # om-autocomplete
 
-An autocomplete component for [Om](http://github.com/swannodette/om).
+An autocomplete component for [Om](http://github.com/swannodette/om)ob.
 
 ## Examples
 
-* [Bootstrap](http://arosequist.github.io/om-autocomplete/bootstrap/index.html) ([source](examples/bootstrap/src/arosequist/om_autocomplete/examples/bootstrap.cljs)) demonstrates basic usage of the built-in Twitter Bootstrap components. The suggestions recommended are just variants of the input text.
+* [Bootstrap](http://fterrier.github.io/om-autocomplete/bootstrap/index.html) ([source](examples/bootstrap/src/arosequist/om_autocomplete/examples/bootstrap.cljs)) demonstrates basic usage of the built-in Twitter Bootstrap components. The suggestions recommended are just variants of the input text.
 
-* [Movies](http://arosequist.github.io/om-autocomplete/movies/index.html) ([source](examples/movies/src/arosequist/om_autocomplete/examples/movies.cljs)) uses a remote webservice to fetch suggestions.
+* [Movies](http://fterrier.github.io/om-autocomplete/movies/index.html) ([source](examples/movies/src/arosequist/om_autocomplete/examples/movies.cljs)) uses a remote webservice to fetch suggestions.
 
 ## Component documentation
 
@@ -109,4 +109,15 @@ If you want to add Boostrap specific classes to your component, wrap your option
        {:result-ch      result-ch
         :result-text-fn (fn [item _] (str item))
         :suggestions-fn suggestions}}))
+```
+
+## Deploy documentation
+
+```
+git subtree push --prefix examples/ origin gh-pages
+lein cljsbuild once movies
+lein cljsbuild once bootstrap
+git add bootstrap/app.js movies/app.js
+git commit -m 'added app.js'
+git push origin gh-pages
 ```
