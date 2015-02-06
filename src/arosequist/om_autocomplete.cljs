@@ -125,7 +125,7 @@
                                    (text-fn item index)))))))
 
 
-(defn- results-default [app _ {:keys [class-name id loading loading-opts result-item-opts]}]
+(defn- results-default [app _ {:keys [class-name id loading-opts result-item-opts]}]
   (reify
     om/IRenderState
     (render-state [_ {:keys [highlight-ch select-ch value loading? focused? mouse-ch suggestions highlighted-index]}]
@@ -141,7 +141,7 @@
                                                                  (put! mouse-ch false)
                                                                  (.preventDefault e))}]
                     (cond
-                      (and loading-view loading?)
+                      loading?
                       (dom/ul attrs (om/build loading-default app {:opts loading-opts}))
                       (not (empty? suggestions))
                       (apply dom/ul attrs
