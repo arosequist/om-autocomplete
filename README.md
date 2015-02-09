@@ -2,62 +2,135 @@
 
 An autocomplete component for [Om](http://github.com/swannodette/om).
 
+[![Clojars Project](http://clojars.org/org.clojars.fterrier/om-autocomplete/latest-version.svg)](http://clojars.org/org.clojars.fterrier/om-autocomplete)
+
 ## Examples
 
-* [Bootstrap](http://arosequist.github.io/om-autocomplete/bootstrap/index.html) ([source](https://github.com/arosequist/om-autocomplete/blob/master/examples/bootstrap/src/arosequist/om_autocomplete/examples/bootstrap.cljs)) demonstrates basic usage of the built-in Twitter Bootstrap components. The suggestions recommended are just variants of the input text.
+* [Bootstrap](http://fterrier.github.io/om-autocomplete/bootstrap/index.html) ([source](examples/bootstrap/src/arosequist/om_autocomplete/examples/bootstrap.cljs)) demonstrates basic usage of the built-in Twitter Bootstrap components. The suggestions recommended are just variants of the input text.
 
-* [Movies](http://arosequist.github.io/om-autocomplete/movies/index.html) ([source](https://github.com/arosequist/om-autocomplete/blob/master/examples/movies/src/arosequist/om_autocomplete/examples/movies.cljs)) uses a remote webservice to fetch suggestions. _The service is down, so this demo doesn't currently work. Will update when I can replace it with another one._
+* [Movies](http://fterrier.github.io/om-autocomplete/movies/index.html) ([source](examples/movies/src/arosequist/om_autocomplete/examples/movies.cljs)) uses a remote webservice to fetch suggestions.
 
-## Components
+## Component documentation
 
-Here's a mockup of a basic autocompleter:
+Use the component this way. If you use Leiningen, put this in `project.clj`:
 
-<p align="center">
-  <img src="http://arosequist.github.io/om-autocomplete/components.png" />
-</p>
+```clojure
+[org.clojars.fterrier/om-autocomplete "0.1.0"]
+```
 
-The `arosequist.om-autocomplete` namespace contains a single function, `autocomplete`, which is an Om component that handles the core autocomplete logic, but does not directly render any DOM elements. Instead, you give it three main components:
+To use the component with sensible defaults, use these parameters:
 
-1. The **container view** just holds the other two components. Typically, this will render a simple wrapper div.
-1. The **input view** is responsible for taking user input.
-1. The **results view** displays the suggestions that were generated based on the input.
+```clojure
+(ns arosequist.example
+  (:require [arosequist.om-autocomplete :as ac]))
 
-Some important terms are:
 
-* The input has **focus** that is either true or false, normally corresponding to the normal HTML focus. You'll often want to hide the results when the input loses focus.
-* The input also has a **value** ("uni" in the example). When this changes, the list of suggestions will be refreshed.
-* A **suggestion** can be anything. Your results view just needs to know how to display it. In the example, each suggestion contains the flag and country name.
-* The **highlighted** suggestion is usually changed by hovering the mouse or pressing the up/down arrow keys. Here, "United States" is the highlighted suggestion.
-* A suggestion can be **selected**, typically by clicking the mouse or pressing enter. This usually signals the end of the autocomplete workflow.
+(om/build ac/autocomplete {}
+    {:opts
+        {:suggestions-fn    (fn [value suggestions-ch cancel-ch] ...)
+            ; A function that puts the suggestions on suggestions-ch. If asyncronous,
+            the suggestion call should also listen to cancel-ch. The autocomplete
+            component closes the cancel-ch whenever the call should be canceled.
 
-## Details
+         :result-ch         result-ch}})
+            ; A channel where the autocomplete component puts the result
+            once it is selected.
+```
 
-The options for `autocomplete` are (as keywords):
+Here is a documentation of all possible options:
 
-* **result-ch**: a channel that will receive an item once it's been selected.
-* **suggestions-fn**: a function that calculates the suggestions for a given input. It takes three arguments: the input value, a channel to place the suggestions (as a single seq), and a channel that, when closed, indicates that the input changed and you should cancel fetching suggestions (when applicable).
-* **container-view**: an Om component that will hold `input-component` and `results-component`.
-* **container-opts**: any options that should be passed to the `container-view`.
-* **input-view**: an Om component that will be responsible for taking user input. The state it receives will contain:
- * **focus-ch**: a channel that you should put `true` on whenever the input receives focus, and `false` when the input loses focus.
- * **value-ch**: a channel that you should put the user-supplied value onto when it changes.
- * **highlight-ch**: a channel that you should put the index of the highlighted item onto when it changes.
- * **select-ch**: a channel that you should put the index of an item onto when it's selected.
- * **value**: the current user-entered value.
- * **highlighted-index**: the index of the suggestion that's currently highlighted.
-* **input-view-opts**: any options that should be passed to the `input-view`.
-* **results-view**: an Om component that will be responsible for displaying autocompleted results. The state it receives will contain:
- * **highlight-ch**: a channel that you should put the index of an item onto when it's highlighted.
- * **select-ch**: a channel that you should put the index of an item onto when it's selected.
- * **value**: the current user-entered value.
- * **loading?**: a boolean that indicates if the suggestions are currently being loaded.
- * **focused?**: a boolean that indicates if the input is currently focused.
- * **suggestions**: the suggestions, as provided by the `suggestions-fn`.
- * **highlighted-index**: the index of the suggestion that's currently highlighted.
-* **results-view-opts**: any options that should be passed to the `results-view`.
+```clojure
+(ns arosequist.example
+  (:require [arosequist.om-autocomplete :as ac]))
 
-## Bootstrap
 
-om-autocomplete contains some convenience functions for pages that are using Twitter Boostrap. They are located in the `arosequist.om-autocomplete.bootstrap` namespace. *TODO: More documentation here*
+(om/build ac/autocomplete {}
+    {:opts
+        {:suggestions-fn    (fn [value suggestions-ch cancel-ch] ...)
+         :result-ch         result-ch
 
-Much of the code in this namespace isn't Bootstrap-specific, and I expect to create other helper namespaces for common use cases.
+         :result-text-fn    (fn [item _] (:name item))
+            ; (optional) A function that, given a suggested item,
+            ; returns the text that will be displayed.
+
+         :input-opts
+            {:input-focus-ch input-focus-ch
+                ; (optional) Putting "true" into this channel will cause
+                ; the autocomplete component to gain focus.
+             :placeholder    input-placeholder
+                ; (optional) A placeholder text for the input field.
+             :id             input-id
+                ; (optional) An id for the input field (in case you want to label it.)
+             :class-name     input-class-name
+                ; (optional) A class for the input element.
+             :on-key-down    (fn [e value handler] ... (handler e))))}
+                ; (optional) A handler that will be called whenever a key is pressed.
+                ; You can chose whether you want to propagate it further to the default
+                ; autocomplete handler or not.
+
+        :loading-opts
+            {:id         loading-id
+                ; (optional) An id for the loading element
+             :class-name loading-class-name}
+                ; (optional) A class for the loading element
+
+        :container-opts
+            {:id         container-id
+                ; (optional) An id for the container element
+             :class-name container-class-name}
+                ; (optional) An class for the container element
+
+        :results         results-view
+                ; (optional) An Om component that will be used to render the results
+                ; instead of the default one. Receives as :opts a map with keys:
+                ; [class-name id loading-opts result-item-opts] corresponding to
+                ; the options documented here. Also receives as state a map with the keys
+                ; [ highlight-ch select-ch value loading?
+                ;   focused? mouse-ch suggestions highlighted-index ]
+                ; It is recommended to use this option only if you want to display something
+                ; else than a dropdown for the suggestions, like in the Movies example.
+        :results-opts
+            {:id         results-id
+                ; (optional) An id for the results element
+             :class-name results-class-name}
+                ; (optional) An class for the results element
+
+        :result-item-opts
+            {:id         result-item-id
+                ; (optional) An id for the result item element
+             :class-name result-item-class-name}}})
+                ; (optional) An class for the result item element
+```
+
+### Bootstrap wrapper
+
+om-autocomplete contains some convenience functions for pages that are using Twitter Boostrap. They are located in the `arosequist.om-autocomplete.bootstrap` namespace.
+
+If you want to add Boostrap specific classes to your component, wrap your options with `add-bootstrap-m` like this :
+
+```clojure
+(ns arosequist.example
+  (:require [arosequist.om-autocomplete :as ac]
+            [arosequist.om-autocomplete.bootstrap :as acb]))
+
+(om/build ac/autocomplete
+    {}
+    (acb/add-bootstrap-m
+      {:opts
+       {:result-ch      result-ch
+        :result-text-fn (fn [item _] (str item))
+        :suggestions-fn suggestions}}))
+```
+
+## Deploy documentation
+
+```
+git push origin --delete gh-pages
+git subtree push --prefix examples/ origin gh-pages
+git checkout gh-pages
+lein cljsbuild once movies
+lein cljsbuild once bootstrap
+git add bootstrap/app.js movies/app.js
+git commit -m 'added app.js'
+git push origin gh-pages
+```

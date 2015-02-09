@@ -31,13 +31,14 @@
       <h1>Movies example for om-autocomplete</h1>
       <div id="autocomplete" style="padding-top: 10px; padding-bottom: 10px;"></div>
       <ul>
-        <li>Results are fetched from <a href="http://www.themoviedb.org" target="_blank">themoviedb.org</a>.</li>
+        <li>Results are fetched from <a href="http://www.omdbapi.com/" target="_blank">omdbapi.com</a>. The
+        images are randomly fetched from <a href="http://lorempixel.com/" target="_blank">lorempixel.com</a> because
+        I could not find any free API to get movie posters.</li>
         <li>There is no hovering or selecting in this demo -- if the input loses focus, the suggestions are still displayed, and clicking one of them just opens a page with details.</li>
         <li>Open DevTools to watch requests get canceled if you type fast enough.</li>
       </ul>
     </div>
 
-    <script src="http://fb.me/react-0.9.0.js"></script>
     <script src="out/goog/base.js" type="text/javascript"></script>
     <script src="app.js" type="text/javascript"></script>
     <script type="text/javascript">goog.require("arosequist.om_autocomplete.examples.movies");</script>
