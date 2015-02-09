@@ -2,6 +2,8 @@
 
 An autocomplete component for [Om](http://github.com/swannodette/om).
 
+[![Clojars Project](http://clojars.org/org.clojars.fterrier/om-autocomplete/latest-version.svg)](http://clojars.org/org.clojars.fterrier/om-autocomplete)
+
 ## Examples
 
 * [Bootstrap](http://fterrier.github.io/om-autocomplete/bootstrap/index.html) ([source](examples/bootstrap/src/arosequist/om_autocomplete/examples/bootstrap.cljs)) demonstrates basic usage of the built-in Twitter Bootstrap components. The suggestions recommended are just variants of the input text.
@@ -13,7 +15,7 @@ An autocomplete component for [Om](http://github.com/swannodette/om).
 Use the component this way. If you use Leiningen, put this in `project.clj`:
 
 ```clojure
-TODO
+[org.clojars.fterrier/om-autocomplete "0.1.0"]
 ```
 
 To use the component with sensible defaults, use these parameters:
@@ -49,12 +51,12 @@ Here is a documentation of all possible options:
 
          :result-text-fn    (fn [item _] (:name item))
             ; (optional) A function that, given a suggested item,
-            returns the text that will be displayed.
+            ; returns the text that will be displayed.
 
          :input-opts
             {:input-focus-ch input-focus-ch
                 ; (optional) Putting "true" into this channel will cause
-                the autocomplete component to gain focus.
+                ; the autocomplete component to gain focus.
              :placeholder    input-placeholder
                 ; (optional) A placeholder text for the input field.
              :id             input-id
@@ -63,8 +65,8 @@ Here is a documentation of all possible options:
                 ; (optional) A class for the input element.
              :on-key-down    (fn [e value handler] ... (handler e))))}
                 ; (optional) A handler that will be called whenever a key is pressed.
-                You can chose whether you want to propagate it further to the default
-                autocomplete handler or not.
+                ; You can chose whether you want to propagate it further to the default
+                ; autocomplete handler or not.
 
         :loading-opts
             {:id         loading-id
@@ -78,6 +80,15 @@ Here is a documentation of all possible options:
              :class-name container-class-name}
                 ; (optional) An class for the container element
 
+        :results         results-view
+                ; (optional) An Om component that will be used to render the results
+                ; instead of the default one. Receives as :opts a map with keys:
+                ; [class-name id loading-opts result-item-opts] corresponding to
+                ; the options documented here. Also receives as state a map with the keys
+                ; [ highlight-ch select-ch value loading?
+                ;   focused? mouse-ch suggestions highlighted-index ]
+                ; It is recommended to use this option only if you want to display something
+                ; else than a dropdown for the suggestions, like in the Movies example.
         :results-opts
             {:id         results-id
                 ; (optional) An id for the results element
@@ -114,9 +125,9 @@ If you want to add Boostrap specific classes to your component, wrap your option
 ## Deploy documentation
 
 ```
+git push origin --delete gh-pages
 git subtree push --prefix examples/ origin gh-pages
 git checkout gh-pages
-git reset --hard origin/gh-pages
 lein cljsbuild once movies
 lein cljsbuild once bootstrap
 git add bootstrap/app.js movies/app.js

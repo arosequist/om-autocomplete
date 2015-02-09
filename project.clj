@@ -1,6 +1,6 @@
-(defproject om-autocomplete "0.1.0-SNAPSHOT"
+(defproject org.clojars.fterrier/om-autocomplete "0.1.0"
   :description "An autocomplete component for Om."
-  :url "http://github.com/arosequist/om-autocomplete"
+  :url "http://github.com/fterrier/om-autocomplete"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
